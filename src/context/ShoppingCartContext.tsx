@@ -1,10 +1,9 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
 
-type ShoppingCartContextType = {
-  getItemQuantity: (id: number) => number
-  increaseCartQuantity: (id: number) => void
-  decreaseCartQuantity: (id: number) => void
-  removeFromCart: (id: number) => void
+import { ShoppingCart } from '../components/ShoppingCart'
+
+type ShoppingCartProviderProps = {
+  children: ReactNode
 }
 
 type CartItemType = {
@@ -12,8 +11,15 @@ type CartItemType = {
   quantity: number
 }
 
-type ShoppingCartProviderProps = {
-  children: ReactNode
+type ShoppingCartContextType = {
+  getItemQuantity: (id: number) => number
+  increaseCartQuantity: (id: number) => void
+  decreaseCartQuantity: (id: number) => void
+  removeFromCart: (id: number) => void
+  openCart: () => void
+  closeCart: () => void
+  cartQuantity: number
+  cartItems: CartItemType[]
 }
 
 const ShoppingCartContext = createContext({} as ShoppingCartContextType)
@@ -24,6 +30,20 @@ export function useShoppingCart() {
 
 export function ShoppingCartProvider({ children }: ShoppingCartProviderProps) {
   const [cartItems, setCartItems] = useState<CartItemType[]>([])
+  const [isOpen, setIsOpen] = useState(false)
+
+  const cartQuantity = cartItems.reduce(
+    (quantity, item) => item.quantity + quantity,
+    0
+  )
+
+  function openCart() {
+    setIsOpen(true)
+  }
+
+  function closeCart() {
+    setIsOpen(false)
+  }
 
   function getItemQuantity(id: number) {
     return cartItems.find((item) => item.id === id)?.quantity || 0
@@ -31,7 +51,7 @@ export function ShoppingCartProvider({ children }: ShoppingCartProviderProps) {
 
   function increaseCartQuantity(id: number) {
     setCartItems((currentItems) => {
-      if (currentItems.find((item) => item.id === id) === null) {
+      if (currentItems.find((item) => item.id === id) == null) {
         return [...currentItems, { id, quantity: 1 }]
       } else {
         return currentItems.map((item) => {
@@ -74,11 +94,14 @@ export function ShoppingCartProvider({ children }: ShoppingCartProviderProps) {
         increaseCartQuantity,
         decreaseCartQuantity,
         removeFromCart,
+        openCart,
+        closeCart,
+        cartItems,
+        cartQuantity,
       }}
     >
       {children}
+      <ShoppingCart isOpen={isOpen} />
     </ShoppingCartContext.Provider>
   )
 }
-
-export default ShoppingCartContext
